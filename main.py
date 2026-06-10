@@ -12,8 +12,9 @@ face_mesh = mp_face_mesh.FaceMesh(
     refine_landmarks=True
 )
 
-# Left eye landmarks
+# Eye landmarks
 LEFT_EYE = [33, 160, 158, 133, 153, 144]
+RIGHT_EYE = [362, 385, 387, 263, 373, 380]
 
 while True:
 
@@ -32,6 +33,7 @@ while True:
 
         h, w, _ = frame.shape
 
+        # Left Eye
         for idx in LEFT_EYE:
 
             landmark = face.landmark[idx]
@@ -41,7 +43,17 @@ while True:
 
             cv2.circle(frame, (x, y), 5, (0, 0, 255), -1)
 
-    cv2.imshow("Eye Detection", frame)
+        # Right Eye
+        for idx in RIGHT_EYE:
+
+            landmark = face.landmark[idx]
+
+            x = int(landmark.x * w)
+            y = int(landmark.y * h)
+
+            cv2.circle(frame, (x, y), 5, (255, 0, 0), -1)
+
+    cv2.imshow("Both Eye Landmarks", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
