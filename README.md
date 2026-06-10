@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Eye Alert System
 
 ## Setup Instructions
@@ -18,3 +19,7 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
+=======
+# sleeptester
+sleepy while studying? dont worry i got your back!
+>>>>>>> d4cf9a72334f99cedac3275c0d2458712a3152db
