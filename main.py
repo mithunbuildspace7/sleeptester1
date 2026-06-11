@@ -53,7 +53,7 @@ RIGHT_EYE = [362, 385, 387, 263, 373, 380]
 # SETTINGS
 # -----------------------------
 
-EAR_THRESHOLD = 0.20
+EAR_THRESHOLD = 0.15
 
 closed_start_time = None
 alarm_playing = False
@@ -155,14 +155,51 @@ while True:
                     closed_start_time = time.time()
 
                 elapsed = time.time() - closed_start_time
+                # Progress percentage (0 to 100)
+                progress = min(elapsed / 2, 1.0)
 
+                # Progress bar dimensions
+                bar_x = 30
+                bar_y = 250
+                bar_width = 100
+                bar_height = 10
+
+                # Draw empty bar
+                cv2.rectangle(
+                    frame,
+                    (bar_x, bar_y),
+                    (bar_x + bar_width, bar_y + bar_height),
+                    (100, 100, 100),
+                    2
+                )
+
+                # Change color based on progress
+
+                if progress < 0.5:
+                    color = (0, 255, 0)      # Green
+                elif progress < 0.75:
+                    color = (0, 255, 255)    # Yellow
+                else:
+                    color = (0, 0, 255)      # Red
+
+                # Draw filled portion
+                cv2.rectangle(
+                    frame,
+                    (bar_x, bar_y),
+                    (bar_x + int(bar_width * progress), bar_y + bar_height),
+                    color,
+                    -1
+                )
+                
+
+                # Percentage text
                 cv2.putText(
                     frame,
-                    f"Timer: {elapsed:.1f}s",
-                    (30, 150),
+                    f"{int(progress * 100)}%",
+                    (bar_x + 110, bar_y + 22),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 255, 255),
+                    0.7,
+                    (0, 0, 0),
                     2
                 )
 
