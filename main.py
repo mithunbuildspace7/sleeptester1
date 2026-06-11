@@ -1,10 +1,19 @@
 import cv2
 import mediapipe as mp
 import math
+import time
+import pygame
 
-# -----------------------------------
+# -----------------------------
+# PYGAME ALARM SETUP
+# -----------------------------
+
+pygame.mixer.init()
+pygame.mixer.music.load("alarm.wav")
+
+# -----------------------------
 # FUNCTIONS
-# -----------------------------------
+# -----------------------------
 
 def distance(p1, p2):
     return math.sqrt(
@@ -19,19 +28,11 @@ def calculate_ear(eye_points):
 
     horizontal = distance(eye_points[0], eye_points[3])
 
-    ear = (vertical1 + vertical2) / (2.0 * horizontal)
+    return (vertical1 + vertical2) / (2.0 * horizontal)
 
-    return ear
-
-# -----------------------------------
-# WEBCAM
-# -----------------------------------
-
-cap = cv2.VideoCapture(0)
-
-# -----------------------------------
+# -----------------------------
 # FACEMESH
-# -----------------------------------
+# -----------------------------
 
 mp_face_mesh = mp.solutions.face_mesh
 
@@ -41,17 +42,27 @@ face_mesh = mp_face_mesh.FaceMesh(
     refine_landmarks=True
 )
 
-# Left eye landmarks
-LEFT_EYE = [33, 160, 158, 133, 153, 144]
+# -----------------------------
+# EYE LANDMARKS
+# -----------------------------
 
-# Right eye landmarks
+LEFT_EYE = [33, 160, 158, 133, 153, 144]
 RIGHT_EYE = [362, 385, 387, 263, 373, 380]
+
+# -----------------------------
+# SETTINGS
+# -----------------------------
 
 EAR_THRESHOLD = 0.20
 
-# -----------------------------------
-# MAIN LOOP
-# -----------------------------------
+closed_start_time = None
+alarm_playing = False
+
+# -----------------------------
+# WEBCAM
+# -----------------------------
+
+cap = cv2.VideoCapture(0)
 
 while True:
 
@@ -97,26 +108,25 @@ while True:
 
             cv2.circle(frame, (x, y), 5, (255, 0, 0), -1)
 
-        # Make sure all points exist
         if len(left_eye_points) == 6 and len(right_eye_points) == 6:
 
-            # LEFT EYE LINES
+            # EAR LINES
+
             cv2.line(frame, left_eye_points[1], left_eye_points[5], (0,255,255), 2)
             cv2.line(frame, left_eye_points[2], left_eye_points[4], (0,255,255), 2)
             cv2.line(frame, left_eye_points[0], left_eye_points[3], (0,255,255), 2)
 
-            # RIGHT EYE LINES
             cv2.line(frame, right_eye_points[1], right_eye_points[5], (0,255,255), 2)
             cv2.line(frame, right_eye_points[2], right_eye_points[4], (0,255,255), 2)
             cv2.line(frame, right_eye_points[0], right_eye_points[3], (0,255,255), 2)
 
-            # EAR Calculation
+            # EAR
+
             left_ear = calculate_ear(left_eye_points)
             right_ear = calculate_ear(right_eye_points)
 
             ear = (left_ear + right_ear) / 2
 
-            # EAR Display
             cv2.putText(
                 frame,
                 f"EAR: {ear:.2f}",
@@ -127,7 +137,8 @@ while True:
                 2
             )
 
-            # Eye State
+            # EYES CLOSED
+
             if ear < EAR_THRESHOLD:
 
                 cv2.putText(
@@ -140,7 +151,36 @@ while True:
                     3
                 )
 
+                if closed_start_time is None:
+                    closed_start_time = time.time()
+
+                elapsed = time.time() - closed_start_time
+
+                cv2.putText(
+                    frame,
+                    f"Timer: {elapsed:.1f}s",
+                    (30, 150),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 255, 255),
+                    2
+                )
+
+                # START ALARM AFTER 3 SECONDS
+
+                if elapsed >= 2:
+
+                    if not alarm_playing:
+
+                        pygame.mixer.music.play(-1)
+
+                        alarm_playing = True
+
+            # EYES OPEN
+
             else:
+
+                closed_start_time = None
 
                 cv2.putText(
                     frame,
@@ -152,6 +192,12 @@ while True:
                     3
                 )
 
+                if alarm_playing:
+
+                    pygame.mixer.music.stop()
+
+                    alarm_playing = False
+
     cv2.imshow("Eye Alert System", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -161,4 +207,8 @@ while True:
         break
 
 cap.release()
+
+pygame.mixer.music.stop()
+pygame.quit()
+
 cv2.destroyAllWindows()
